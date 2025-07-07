@@ -18,4 +18,4 @@ Route::get('/', function () {
     return view('welcome');
 
 });
-Route::post('/webhook/whatsapp', [WhatsAppBotController::class, 'handle']);
+Route::post('/webhook', [WhatsAppBotController::class, 'handle']);

@@ -19,6 +19,7 @@ class WhatsAppBotController extends Controller
 
     public function handle(Request $request)
     {
+        Log::info("MENSAJE LLEGÓ: ", $request->all());
         $from = $request->input('From');
         $body = strtolower(trim($request->input('Body')));
 
