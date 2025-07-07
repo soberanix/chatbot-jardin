@@ -57,6 +57,12 @@ return [
             'channels' => ['single'],
             'ignore_exceptions' => false,
         ],
+    'whatsapp' => [
+                    'driver' => 'single',
+                    'path' => storage_path('logs/whatsapp.log'),
+                    'level' => 'info',
+                ],
+
 
         'single' => [
             'driver' => 'single',
