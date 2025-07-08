@@ -24,9 +24,42 @@ class WhatsAppBotController extends Controller
 ]);
 
         // Si el mensaje es "hola", enviar bienvenida
-        if ($body === 'hola') {
-            $this->responderWhatsApp($from, "👋 ¡Hola! Bienvenido al Jardín de Eventos IBP 🌺\n\nPuedes escribir una de las siguientes palabras para continuar:\n- *paquetes*\n- *eventos disponibles*\n- *reservar*");
-        }
+        
+        switch ($body) {
+        case 'hola':
+            $this->responderWhatsApp($from, "👋 ¡Hola! Bienvenido al Jardín de Eventos IBP 🌸\nEscribe:\n- *paquetes*\n- *eventos*\n- *reservar*");
+            break;
+
+        case 'paquetes':
+            $paquetes = Paquete::all();
+            if ($paquetes->isEmpty()) {
+                $this->responderWhatsApp($from, "📦 Aún no hay paquetes registrados.");
+            } else {
+                $mensaje = "🎁 *Paquetes disponibles:*\n";
+                foreach ($paquetes as $paquete) {
+                    $mensaje .= "\n• *{$paquete->nombre}* - {$paquete->descripcion}";
+                }
+                $this->responderWhatsApp($from, $mensaje);
+            }
+            break;
+
+        case 'eventos':
+            $eventos = Evento::whereDate('fecha', '>=', now())->orderBy('fecha')->get();
+            if ($eventos->isEmpty()) {
+                $this->responderWhatsApp($from, "📅 No hay eventos programados actualmente.");
+            } else {
+                $mensaje = "🎉 *Próximos eventos:*\n";
+                foreach ($eventos as $evento) {
+                    $mensaje .= "\n• *{$evento->nombre}* el *" . \Carbon\Carbon::parse($evento->fecha)->format('d/m/Y') . "*";
+                }
+                $this->responderWhatsApp($from, $mensaje);
+            }
+            break;
+
+        default:
+            $this->responderWhatsApp($from, "🤖 No entendí tu mensaje. Escribe *hola*, *paquetes* o *eventos*.");
+            break;
+    }
 
         return response('OK', 200);
     }
