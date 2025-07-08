@@ -17,6 +17,11 @@ class WhatsAppBotController extends Controller
             'from' => $from,
             'body' => $body,
         ]);
+        Log::channel('whatsapp')->info('TWILIO VARS', [
+    'sid' => env('TWILIO_ACCOUNT_SID'),
+    'token' => env('TWILIO_AUTH_TOKEN'),
+    'from' => env('TWILIO_WHATSAPP_NUMBER'),
+]);
 
         // Si el mensaje es "hola", enviar bienvenida
         if ($body === 'hola') {
