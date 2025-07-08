@@ -1,12 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
-use App\Models\Paquete;
-use App\Models\Evento;
-use Twilio\Rest\Client;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class WhatsAppBotController extends Controller
@@ -19,11 +13,14 @@ class WhatsAppBotController extends Controller
     }
 
     public function handle(Request $request)
-    {
-        Log::channel('whatsapp')->info('🔔 Webhook recibido', [
-    'from' => $request->input('From'),
-    'body' => $request->input('Body')
-]);
+{
+    Log::channel('whatsapp')->info('🔔 Webhook recibido', [
+        'from' => $request->input('From'),
+        'body' => $request->input('Body')
+    ]);
+
+    return response('OK', 200);
+}
 
 
 
