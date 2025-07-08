@@ -14,9 +14,10 @@ class WhatsAppBotController extends Controller
 
         Log::info('🔔 Webhook recibido', [
             'from' => $from,
-            'body' => $body
+            'body' => $body,
         ]);
 
         return response('OK', 200);
     }
 }
+
