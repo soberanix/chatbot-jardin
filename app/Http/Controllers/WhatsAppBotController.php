@@ -32,14 +32,30 @@ class WhatsAppBotController extends Controller
     }
 
     private function responderWhatsApp($to, $mensaje)
-    {
+{
+    try {
         $sid = env('TWILIO_ACCOUNT_SID');
         $token = env('TWILIO_AUTH_TOKEN');
         $twilio = new Client($sid, $token);
 
+        $from = env('TWILIO_WHATSAPP_NUMBER');
+
+        Log::channel('whatsapp')->info('📤 Enviando mensaje', [
+            'to' => $to,
+            'from' => $from,
+            'mensaje' => $mensaje
+        ]);
+
         $twilio->messages->create($to, [
-            'from' => 'whatsapp:' . env('TWILIO_WHATSAPP_NUMBER'),
+            'from' => $from,
             'body' => $mensaje
         ]);
+
+    } catch (\Exception $e) {
+        Log::channel('whatsapp')->error('❌ Error al enviar mensaje', [
+            'exception' => $e->getMessage()
+        ]);
     }
+}
+
 }
