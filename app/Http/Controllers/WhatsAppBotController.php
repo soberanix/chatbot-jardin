@@ -37,7 +37,7 @@ class WhatsAppBotController extends Controller
             } else {
                 $mensaje = "🎁 *Paquetes disponibles:*\n";
                 foreach ($paquetes as $paquete) {
-                    $mensaje .= "\n• *{$paquete->nombre}* - {$paquete->descripcion}";
+                    $mensaje .= "\n• *{$paquete->nombre}* - {$paquete->precio}";
                 }
                 $this->responderWhatsApp($from, $mensaje);
             }
