@@ -13,10 +13,11 @@ class WhatsAppBotController extends Controller
         $from = $request->input('From');
         $body = strtolower(trim($request->input('Body')));
 
-        Log::info('🔔 Webhook recibido', [
-            'from' => $from,
-            'body' => $body,
-        ]);
+        Log::channel('whatsapp')->info('🔔 Webhook recibido', [
+    'from' => $from,
+    'body' => $body,
+]);
+
 
         // Respuesta automática
         $this->responderWhatsApp($from, "Hola 👋 gracias por escribir. ¿En qué puedo ayudarte?");
