@@ -11,16 +11,17 @@ class WhatsAppBotController extends Controller
     public function handle(Request $request)
     {
         $from = $request->input('From');
-        $body = strtolower(trim($request->input('Body')));
+        $body = strtolower(trim($request->input('Body'))); // Convertir a minúsculas y sin espacios
 
         Log::channel('whatsapp')->info('🔔 Webhook recibido', [
-    'from' => $from,
-    'body' => $body,
-]);
+            'from' => $from,
+            'body' => $body,
+        ]);
 
-
-        // Respuesta automática
-        $this->responderWhatsApp($from, "Hola 👋 gracias por escribir. ¿En qué puedo ayudarte?");
+        // Si el mensaje es "hola", enviar bienvenida
+        if ($body === 'hola') {
+            $this->responderWhatsApp($from, "👋 ¡Hola! Bienvenido al Jardín de Eventos IBP 🌺\n\nPuedes escribir una de las siguientes palabras para continuar:\n- *paquetes*\n- *eventos disponibles*\n- *reservar*");
+        }
 
         return response('OK', 200);
     }
