@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Twilio\Rest\Client;
+use App\Models\Paquete;
+use App\Models\Evento;
+use Carbon\Carbon;
 
 class WhatsAppBotController extends Controller
 {
