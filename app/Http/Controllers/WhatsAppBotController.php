@@ -14,12 +14,14 @@ class WhatsAppBotController extends Controller
     public function handle(Request $request)
     {
         $from = $request->input('From');
-        $body = strtolower(trim($request->input('Body'))); // Convertir a minúsculas y sin espacios
-
+        $body = strtolower(trim($request->input('Body')));
+        $session = Cache::get($from, ['stage' => 'inicio']);
+        
         Log::channel('whatsapp')->info('🔔 Webhook recibido', [
             'from' => $from,
             'body' => $body,
         ]);
+        
         Log::channel('whatsapp')->info('TWILIO VARS', [
     'sid' => env('TWILIO_ACCOUNT_SID'),
     'token' => env('TWILIO_AUTH_TOKEN'),
@@ -27,42 +29,79 @@ class WhatsAppBotController extends Controller
 ]);
 
         // Si el mensaje es "hola", enviar bienvenida
-        
-        switch ($body) {
-        case 'hola':
-            $this->responderWhatsApp($from, "👋 ¡Hola! Bienvenido al Jardín de Eventos IBP 🌸\nEscribe:\n- *paquetes*\n- *eventos*\n- *reservar*");
-            break;
+        switch ($session['stage']) {
+    case 'inicio':
+        if (in_array($body, ['hola', 'quiero informacion'])) {
+            $this->responderWhatsApp($from, "Hola! Bienvenido(a) al Jardín de Eventos Los Pinos.\n¿Deseas ver nuestros paquetes disponibles?\n1. Sí\n2. No");
+            $session['stage'] = 'esperando_confirmacion_paquetes';
+            Cache::put($from, $session, now()->addMinutes(30));
+        }
+        break;
 
-        case 'paquetes':
+    case 'esperando_confirmacion_paquetes':
+        if ($body == '1') {
             $paquetes = Paquete::all();
             if ($paquetes->isEmpty()) {
-                $this->responderWhatsApp($from, "📦 Aún no hay paquetes registrados.");
-            } else {
-                $mensaje = "🎁 *Paquetes disponibles:*\n";
-                foreach ($paquetes as $paquete) {
-                    $mensaje .= "\n• *{$paquete->nombre}* ";
-                }
-                $this->responderWhatsApp($from, $mensaje);
+                $this->responderWhatsApp($from, "No hay paquetes disponibles en este momento.");
+                break;
             }
-            break;
 
-        case 'eventos':
-            $eventos = Evento::whereDate('fecha', '>=', now())->orderBy('fecha')->get();
-            if ($eventos->isEmpty()) {
-                $this->responderWhatsApp($from, "📅 No hay eventos programados actualmente.");
-            } else {
-                $mensaje = "🎉 *Próximos eventos:*\n";
-                foreach ($eventos as $evento) {
-                    $mensaje .= "\n• *{$evento->nombre}* el *" . \Carbon\Carbon::parse($evento->fecha)->format('d/m/Y') . "*";
-                }
-                $this->responderWhatsApp($from, $mensaje);
+            $mensaje = "🎁 *Paquetes disponibles:*\n";
+            foreach ($paquetes as $paquete) {
+                $mensaje .= "\n• *{$paquete->nombre}* - {$paquete->descripcion}";
             }
-            break;
 
-        default:
-            $this->responderWhatsApp($from, "🤖 No entendí tu mensaje. Escribe *hola*, *paquetes* o *eventos*.");
-            break;
-    }
+            $this->responderWhatsApp($from, $mensaje);
+            $this->responderWhatsApp($from, "¿Cuál paquete te interesa?");
+            $session['stage'] = 'esperando_nombre_paquete';
+            Cache::put($from, $session, now()->addMinutes(30));
+        } elseif ($body == '2') {
+            $this->responderWhatsApp($from, "Gracias por tu interés. ¡Estamos a tus órdenes!");
+            Cache::forget($from);
+        }
+        break;
+
+    case 'esperando_nombre_paquete':
+        $session['paquete'] = $body;
+        $this->responderWhatsApp($from, "Ingresa la fecha del evento (ejemplo: 15-08-2025):");
+        $session['stage'] = 'esperando_fecha';
+        Cache::put($from, $session, now()->addMinutes(30));
+        break;
+
+    case 'esperando_fecha':
+        $session['fecha'] = $body;
+        $this->responderWhatsApp($from, "¿Cuántos invitados asistirán?");
+        $session['stage'] = 'esperando_invitados';
+        Cache::put($from, $session, now()->addMinutes(30));
+        break;
+
+    case 'esperando_invitados':
+        $session['invitados'] = $body;
+
+        // 🔄 Aquí iría la verificación con Google Calendar (te la agrego en el siguiente paso)
+        $this->responderWhatsApp($from, "Verificando disponibilidad en la fecha {$session['fecha']}...");
+
+        // Simulación: la fecha está libre
+        $this->responderWhatsApp($from, "La fecha está disponible. Por favor proporciona:\n1. Tu nombre completo\n2. Número de contacto\n3. Correo electrónico");
+
+        $session['stage'] = 'esperando_datos_cliente';
+        Cache::put($from, $session, now()->addMinutes(30));
+        break;
+
+    case 'esperando_datos_cliente':
+        $session['datos_cliente'] = $body;
+
+        // 🔧 Aquí se crea el evento en Google Calendar (te mostraré el código)
+        $this->responderWhatsApp($from, "🎉 ¡Gracias! Tu evento ha sido reservado con éxito en la fecha {$session['fecha']}.\nNos pondremos en contacto contigo.");
+
+        Cache::forget($from);
+        break;
+
+    default:
+        $this->responderWhatsApp($from, "🤖 No entendí tu mensaje. Escribe *hola* para comenzar.");
+        Cache::forget($from);
+        break;
+}
 
         return response('OK', 200);
     }
